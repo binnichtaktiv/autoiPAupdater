@@ -71,11 +71,17 @@ dateien_liste = []
 
 tweaks_path = os.path.join(path, "tweaks")
 
+folder_name = None
+
 for root, dirs, files in os.walk(tweaks_path):
     for dir in dirs:
         if old_bundle_id in dir:
             dir_path = os.path.join(tweaks_path, dir)
             dateien_liste.append(dir_path)
+            folder_name = dir
+
+teile = folder_name.split('|')
+output_ipa_name = teile[0]
 
 file_paths = []
 for dir_path in dateien_liste:
@@ -88,7 +94,7 @@ inject_this = ' '.join(['"' + item + '"' for item in file_paths])
 
 file_name_no_ipa_with_extension = file_name_no_ipa + ".ipa"
 
-modded_ipa_path = os.path.join(path, "modded_iPA", f"{old_bundle_id}_{old_version}")
+modded_ipa_path = os.path.join(path, "modded_iPA", f"{output_ipa_name}{old_version}")
 
 pyzule_command = f'pyzule -o "{modded_ipa_path}" -i "{os.path.join(path, "decrypted_iPA", file_name_no_ipa_with_extension)}" -f {inject_this} -c 9'
 subprocess.call(pyzule_command, shell=True)
