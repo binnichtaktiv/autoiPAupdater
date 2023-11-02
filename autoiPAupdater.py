@@ -51,50 +51,67 @@ def unzip_ipa(ipa_path):
 path = "/Users/jonasb./Desktop/autoupdater"
 create_folders_if_not_exist(path)
 
-ipa_path = input("Please enter the path to the IPA file:\n")
-clear_terminal()
-app_path, file_name_no_ipa, zip_path, payload_path = unzip_ipa(ipa_path)
-
-info_plist_path = os.path.join(app_path, "Info.plist")
-with open(info_plist_path, 'rb') as fp:
-    pl = plistlib.load(fp)
-
-old_bundle_id = pl['CFBundleIdentifier']
-print("Current Bundle-ID:", old_bundle_id)
-old_version = pl['CFBundleShortVersionString']
-print("Current App-Version:", old_version)
-
-shutil.rmtree(payload_path)
-os.rename(zip_path, ipa_path)
-
-dateien_liste = []
-
+decrypted_ipa_folder = os.path.join(path, "decrypted_iPA")
 tweaks_path = os.path.join(path, "tweaks")
 
-folder_name = None
+if not os.path.exists(decrypted_ipa_folder):
+    print("The 'decrypted_iPA' folder does not exist. Please store the .iPA files in it.")
+    sys.exit()
 
-for root, dirs, files in os.walk(tweaks_path):
-    for dir in dirs:
-        if old_bundle_id in dir:
-            dir_path = os.path.join(tweaks_path, dir)
-            dateien_liste.append(dir_path)
-            folder_name = dir
+while True:
+    ipa_files = [f for f in os.listdir(decrypted_ipa_folder) if f.endswith(".ipa")]
 
-teile = folder_name.split('|')
-output_ipa_name = teile[0]
+    if not ipa_files:
+        print("There are no .iPA files in the 'decrypted_iPA' folder. The program will be terminated")
+        break
 
-file_paths = []
-for dir_path in dateien_liste:
-    for item in os.listdir(dir_path):
-        item_path = os.path.join(dir_path, item)
-        file_paths.append(item_path)
+    ipa_file = ipa_files[0]
 
+    clear_terminal()
+    app_path, file_name_no_ipa, zip_path, payload_path = unzip_ipa(os.path.join(decrypted_ipa_folder, ipa_file))
 
-inject_this = ' '.join(['"' + item + '"' for item in file_paths])
+    info_plist_path = os.path.join(app_path, "Info.plist")
+    with open(info_plist_path, 'rb') as fp:
+        pl = plistlib.load(fp)
 
-file_name_no_ipa_with_extension = file_name_no_ipa + ".ipa"
+    old_bundle_id = pl['CFBundleIdentifier']
+    print("Current Bundle-ID:", old_bundle_id)
+    old_version = pl['CFBundleShortVersionString']
+    print("Current App-Version:", old_version)
 
-modded_ipa_path = os.path.join(path, "modded_iPA", f"{output_ipa_name}{old_version}")
+    shutil.rmtree(payload_path)
+    os.rename(zip_path, os.path.join(decrypted_ipa_folder, ipa_file))
 
-pyzule_command = f'pyzule -o "{modded_ipa_path}" -i "{os.path.join(path, "decrypted_iPA", file_name_no_ipa_with_extension)}" -f {inject_this} -c 9'
-subprocess.call(pyzule_command, shell=True)
+    dateien_liste = []
+
+    folder_name = None
+
+    for root, dirs, files in os.walk(tweaks_path):
+        for dir in dirs:
+            if old_bundle_id in dir:
+                dir_path = os.path.join(tweaks_path, dir)
+                dateien_liste.append(dir_path)
+                folder_name = dir
+
+    teile = folder_name.split('|')
+    output_ipa_name = teile[0]
+
+    file_paths = []
+    for dir_path in dateien_liste:
+        for item in os.listdir(dir_path):
+            item_path = os.path.join(dir_path, item)
+            file_paths.append(item_path)
+
+    inject_this = ' '.join(['"' + item + '"' for item in file_paths])
+
+    file_name_no_ipa_with_extension = file_name_no_ipa + ".ipa"
+
+    modded_ipa_path = os.path.join(path, "modded_iPA", f"{output_ipa_name}{old_version}")
+
+    pyzule_command = f'pyzule -o "{modded_ipa_path}" -i "{os.path.join(decrypted_ipa_folder, file_name_no_ipa_with_extension)}" -f {inject_this} -c 9'
+    subprocess.call(pyzule_command, shell=True)
+
+    os.remove(os.path.join(decrypted_ipa_folder, ipa_file))
+    print(f"{ipa_file} was successfully processed and deleted.")
+
+print("All .iPA files in the 'decrypted_iPA' folder have been successfully processed.")
