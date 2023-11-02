@@ -48,21 +48,26 @@ def unzip_ipa(ipa_path):
     app_path = os.path.join(payload_path, app_folder)
     return app_path, file_name_no_ipa, zip_path, payload_path
 
-path = "/Users/jonasb./Desktop/autoupdater"
+current_directory = os.getcwd()
+path = os.path.join(current_directory, "autoupdater") 
+
+if not os.path.exists(path):
+    os.makedirs(path)
+    clear_terminal()
+    print(f"The required folders have been created in {path}. Create the folders that contain your tweaks in the 'tweaks' folder as explained in the ReadME and put your decrypted .iPA files in the 'decrypted_iPA' folder. After you did that just run this script again.")
+    sys.exit()
+
 create_folders_if_not_exist(path)
 
 decrypted_ipa_folder = os.path.join(path, "decrypted_iPA")
 tweaks_path = os.path.join(path, "tweaks")
 
-if not os.path.exists(decrypted_ipa_folder):
-    print("The 'decrypted_iPA' folder does not exist. Please store the .iPA files in it.")
-    sys.exit()
-
 while True:
     ipa_files = [f for f in os.listdir(decrypted_ipa_folder) if f.endswith(".ipa")]
 
     if not ipa_files:
-        print("There are no .iPA files in the 'decrypted_iPA' folder. The program will be terminated")
+        clear_terminal()
+        print(f"There are no .iPA files in the 'decrypted_iPA' folder. The program will be terminated.")
         break
 
     ipa_file = ipa_files[0]
